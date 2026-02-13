@@ -11,13 +11,120 @@ app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+// ==================== DASHBOARD API ====================
+
+// GET dashboard summary data
+app.get("/api/dashboard/summary", async (_req, res) => {
+  try {
+    // Using mock user for now
+    const userId = "00000000-0000-0000-0000-000000000000";
+
+    // Get current month's date range
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Get total spending this month (from expenses)
+    const totalSpendingResult = await pool.query(
+      `SELECT COALESCE(SUM(expense_amount_cents), 0) as total
+       FROM expenses
+       WHERE user_id = $1
+       AND expense_date >= $2
+       AND expense_date <= $3`,
+      [userId, firstDayOfMonth, lastDayOfMonth]
+    );
+
+    // Get spending by category this month
+    const categorySpendingResult = await pool.query(
+      `SELECT
+        expense_category as category,
+        SUM(expense_amount_cents) as total_cents
+       FROM expenses
+       WHERE user_id = $1
+       AND expense_date >= $2
+       AND expense_date <= $3
+       GROUP BY expense_category
+       ORDER BY total_cents DESC`,
+      [userId, firstDayOfMonth, lastDayOfMonth]
+    );
+
+    // Get budget information for current month
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const budgetsResult = await pool.query(
+      `SELECT
+        budget_category,
+        monthly_limit_cents
+       FROM budgets
+       WHERE user_id = $1
+       AND budget_month = $2`,
+      [userId, currentMonth]
+    );
+
+    // Get upcoming subscription renewals (all active and trial subscriptions)
+    const upcomingRenewalsResult = await pool.query(
+      `SELECT
+        subscription_id,
+        subscription_title,
+        subscription_amount_cents,
+        next_renewal_date,
+        billing_cycle,
+        subscription_status
+       FROM subscriptions
+       WHERE user_id = $1
+       AND subscription_status IN ('active', 'trial')
+       AND next_renewal_date IS NOT NULL
+       ORDER BY next_renewal_date ASC`,
+      [userId]
+    );
+
+    // Calculate budget usage
+    const budgetUsage = budgetsResult.rows.map(budget => {
+      const spending = categorySpendingResult.rows.find(
+        s => s.category === budget.budget_category
+      );
+      const spentCents = spending ? Number(spending.total_cents) : 0;
+      const limitCents = Number(budget.monthly_limit_cents);
+
+      return {
+        category: budget.budget_category,
+        limit: limitCents / 100,
+        spent: spentCents / 100,
+        percentage: limitCents > 0 ? Math.round((spentCents / limitCents) * 100) : 0,
+        status: spentCents > limitCents ? 'over' : spentCents > limitCents * 0.9 ? 'warning' : 'good'
+      };
+    });
+
+    res.json({
+      totalSpending: Number(totalSpendingResult.rows[0].total) / 100,
+      categorySpending: categorySpendingResult.rows.map(row => ({
+        category: row.category,
+        amount: Number(row.total_cents) / 100
+      })),
+      budgetUsage,
+      upcomingRenewals: upcomingRenewalsResult.rows.map(row => ({
+        id: row.subscription_id,
+        title: row.subscription_title,
+        amount: Number(row.subscription_amount_cents) / 100,
+        renewalDate: row.next_renewal_date,
+        billingCycle: row.billing_cycle,
+        status: row.subscription_status
+      })),
+      currentMonth: currentMonth
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard summary:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard summary" });
+  }
+});
+
 // ==================== SUBSCRIPTIONS API ====================
 
-// GET all subscriptions for a user (mock user_id for now)
+// GET all subscriptions for a user
 app.get("/api/subscriptions", async (_req, res) => {
   try {
-    // TODO: Get user_id from authentication
-    // For now, we'll get all subscriptions or use a mock user_id
+    // Using mock user for now
+    const userId = "00000000-0000-0000-0000-000000000000";
+
     const result = await pool.query(
       `SELECT
         subscription_id,
@@ -30,9 +137,11 @@ app.get("/api/subscriptions", async (_req, res) => {
         subscription_note,
         created_at
       FROM subscriptions
+      WHERE user_id = $1
       ORDER BY
         next_renewal_date IS NULL,
-        next_renewal_date ASC`
+        next_renewal_date ASC`,
+      [userId]
     );
 
     // Convert cents to dollars for frontend
@@ -66,10 +175,8 @@ app.post("/api/subscriptions", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // TODO: Get user_id from authentication
-    // For now, we'll need to create a mock user or handle this differently
-    // Let's create a default user_id for testing
-    const mockUserId = "00000000-0000-0000-0000-000000000000";
+    // Using mock user for now
+    const userId = "00000000-0000-0000-0000-000000000000";
 
     // Convert dollars to cents
     const amount_cents = Math.round(subscription_amount * 100);
@@ -96,7 +203,7 @@ app.post("/api/subscriptions", async (req, res) => {
         subscription_note,
         created_at`,
       [
-        mockUserId,
+        userId,
         subscription_title,
         subscription_category,
         amount_cents,
