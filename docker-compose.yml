@@ -3,14 +3,14 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: FinTrack_postgres
+    container_name: fintrack_postgres
     restart: always
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: FinTrack_user
-      POSTGRES_PASSWORD: FinTrack_pass
-      POSTGRES_DB: FinTrack
+      POSTGRES_USER: fintrack_user
+      POSTGRES_PASSWORD: fintrack_pass
+      POSTGRES_DB: fintrack
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

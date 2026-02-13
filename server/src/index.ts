@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./db";
+import { expensesRouter } from "./modules/expenses/expenses.routes";
+
 
 dotenv.config();
 
@@ -312,6 +314,8 @@ app.delete("/api/subscriptions/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete subscription" });
   }
 });
+
+app.use("/api/expenses", expensesRouter);
 
 const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => console.log(`API http://localhost:${port}`));
