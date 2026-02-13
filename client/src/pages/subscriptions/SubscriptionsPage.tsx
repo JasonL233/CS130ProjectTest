@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CATEGORY_COLORS, STATUS_COLORS } from '../../constants/colors';
 import './SubscriptionsPage.css';
 
 interface Subscription {
@@ -201,37 +202,6 @@ export default function SubscriptionsPage() {
     return cycle.charAt(0).toUpperCase() + cycle.slice(1);
   };
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'status-badge status-active';
-      case 'trial':
-        return 'status-badge status-trial';
-      case 'canceled':
-        return 'status-badge status-canceled';
-      default:
-        return 'status-badge';
-    }
-  };
-
-  const getCategoryBadgeClass = (category: string) => {
-    switch (category) {
-      case 'Food':
-        return 'category-badge category-food';
-      case 'Housing':
-        return 'category-badge category-housing';
-      case 'Transportation':
-        return 'category-badge category-transportation';
-      case 'Utilities':
-        return 'category-badge category-utilities';
-      case 'Entertainment':
-        return 'category-badge category-entertainment';
-      case 'Other':
-        return 'category-badge category-other';
-      default:
-        return 'category-badge';
-    }
-  };
 
   return (
     <div className="subscriptions-page">
@@ -276,7 +246,18 @@ export default function SubscriptionsPage() {
                   <tr key={subscription.subscription_id}>
                     <td>{subscription.subscription_title}</td>
                     <td>
-                      <span className={getCategoryBadgeClass(subscription.subscription_category)}>
+                      <span
+                        className="category-badge"
+                        style={{
+                          backgroundColor: CATEGORY_COLORS[subscription.subscription_category] || '#95a5a6',
+                          color: '#ffffff',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          display: 'inline-block'
+                        }}
+                      >
                         {subscription.subscription_category}
                       </span>
                     </td>
@@ -284,7 +265,19 @@ export default function SubscriptionsPage() {
                     <td>{formatCycle(subscription.billing_cycle)}</td>
                     <td>{formatDate(subscription.next_renewal_date)}</td>
                     <td>
-                      <span className={getStatusBadgeClass(subscription.subscription_status)}>
+                      <span
+                        className="status-badge"
+                        style={{
+                          backgroundColor: STATUS_COLORS[subscription.subscription_status as keyof typeof STATUS_COLORS]?.background || '#e5e7eb',
+                          color: STATUS_COLORS[subscription.subscription_status as keyof typeof STATUS_COLORS]?.text || '#374151',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'capitalize' as const,
+                          display: 'inline-block'
+                        }}
+                      >
                         {subscription.subscription_status.charAt(0).toUpperCase() +
                           subscription.subscription_status.slice(1)}
                       </span>
