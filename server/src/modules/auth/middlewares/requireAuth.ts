@@ -22,7 +22,7 @@ export function requireAuth(
   _res: Response,
   next: NextFunction
 ) {
-  (req as AuthRequest).userId = "00000000-0000-0000-0000-000000000001";
+  (req as AuthRequest).userId = "00000000-0000-0000-0000-000000000000";
   next();
 }
 /**
