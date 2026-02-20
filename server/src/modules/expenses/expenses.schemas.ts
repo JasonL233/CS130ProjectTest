@@ -32,8 +32,8 @@ export const ListExpensesQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   category: ExpenseCategory.optional(),
+  title: z.string().min(1).max(200).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
-  cursor: z.string().optional(),
 });
 
 export type CreateExpenseDTO = z.infer<typeof CreateExpenseSchema>;
