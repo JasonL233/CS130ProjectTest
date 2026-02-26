@@ -9,51 +9,13 @@ services:
       - ./.env.docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./server/src/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./server/src/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
-
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: fintrack_server
-    ports:
-      - "4000:4000"
-    env_file:
-      - ./.env.docker
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./server/src:/app/src
-    develop:
-      watch:
-        - action: sync
-          path: ./server/src
-          target: /app/src
-
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: fintrack_client
-    ports:
-      - "5173:5173"
-    env_file:
-      - ./.env.docker
-    depends_on:
-      - server
-    volumes:
-      - ./client/src:/app/src
-      - ./client/index.html:/app/index.html
-    develop:
-      watch:
-        - action: sync
-          path: ./client/src
-          target: /app/src
 
 volumes:
   postgres_data:
