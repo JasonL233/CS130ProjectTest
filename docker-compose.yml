@@ -1,32 +1,4 @@
 services:
-  server:
-    build: ./server
-    container_name: fintrack_server
-    ports:
-      - "4000:4000"
-    env_file:
-      - ./.env.docker
-    depends_on:
-      - postgres
-    volumes:
-      - ./server:/app
-      - server_node_modules:/app/node_modules
-    command: npm run dev -- --poll
-  
-  client:
-    build: ./client
-    container_name: fintrack_client
-    ports:
-      - "5173:5173"
-    env_file:
-      - ./.env.docker
-    depends_on:
-      - server
-    volumes:
-      - ./client:/app
-      - client_node_modules:/app/node_modules
-    command: npm run dev -- --host 0.0.0.0 --port 5173
-
   postgres:
     image: postgres:16
     container_name: fintrack_postgres
@@ -37,8 +9,51 @@ services:
       - ./.env.docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fintrack_server
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./.env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./server/src:/app/src
+    develop:
+      watch:
+        - action: sync
+          path: ./server/src
+          target: /app/src
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: fintrack_client
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./.env.docker
+    depends_on:
+      - server
+    volumes:
+      - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
+    develop:
+      watch:
+        - action: sync
+          path: ./client/src
+          target: /app/src
 
 volumes:
   postgres_data:
-  server_node_modules:
-  client_node_modules:
