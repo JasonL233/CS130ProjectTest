@@ -3,6 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+if (!process.env.DATABASE_URL) {
+  console.error("Missing DATABASE_URL in .env. Example: postgresql://user:password@localhost:5432/dbname");
+}
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+});
+
+pool.on("error", (err) => {
+  console.error("DB pool error:", err.message, err.cause ?? "");
 });

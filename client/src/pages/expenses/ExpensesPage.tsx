@@ -187,8 +187,13 @@ export default function ExpensesPage() {
   useEffect(() => {fetchExpenses();}, []);
 
   return (
-    <div>
-      <h1>Expense Management</h1>
+    <div className="expenses-page">
+      <div className="page-header">
+        <h1>Expenses</h1>
+        <button className="btn-primary" onClick={handleAddClick}>
+          + Add Expense
+        </button>
+      </div>
 
       {error && (
         <div className="error-message">
@@ -199,73 +204,63 @@ export default function ExpensesPage() {
       {loading ? (
         <div className="loading">Loading expenses...</div>
       ) : (
-        <div style={{ marginTop: '2rem' }}>
-          <button style={{ padding: '0.5rem 1rem', cursor: 'pointer', marginBottom: '1rem' }} onClick={handleAddClick}>
-            + Add Expense
-          </button>
-          <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '8px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #ddd' }}>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Date</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Title</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Category</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Amount</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Note</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Actions</th>
+        <div className="table-container">
+          <table className="expenses-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="empty-state">
+                    No expenses yet. Click &quot;Add Expense&quot; to get started.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {expenses.length == 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>
-                      No expenses yet. Click "Add Expense" to get started.
+              ) : (
+                expenses.map((expense) => (
+                  <tr key={expense.expense_id}>
+                    <td>{formatDate(expense.expense_date)}</td>
+                    <td>{expense.expense_title}</td>
+                    <td>
+                      <span
+                        className="category-badge"
+                        style={{
+                          backgroundColor: CATEGORY_COLORS[expense.expense_category] || '#95a5a6',
+                          color: '#ffffff',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          display: 'inline-block',
+                        }}
+                      >
+                        {expense.expense_category}
+                      </span>
+                    </td>
+                    <td>${(expense.expense_amount_cents / 100).toFixed(2)}</td>
+                    <td>{expense.expense_note}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="btn-edit" onClick={() => handleEditClick(expense)}>
+                          Edit
+                        </button>
+                        <button className="btn-delete" onClick={() => handleDeleteClick(expense)}>
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  expenses.map((expense) => (
-                    <tr key={expense.expense_id}>
-                      <td>{formatDate(expense.expense_date)}</td>
-                      <td>{expense.expense_title}</td>
-                      <td>
-                        <span
-                          className="category-badge"
-                          style={{
-                            backgroundColor: CATEGORY_COLORS[expense.expense_category] || '#95a5a6',
-                            color: '#ffffff',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            display: 'inline-block'
-                          }}
-                        >
-                          {expense.expense_category}
-                        </span>
-                      </td>
-                      <td>${(expense.expense_amount_cents / 100).toFixed(2)}</td>
-                      <td>{expense.expense_note}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="btn-edit"
-                            onClick={() => handleEditClick(expense)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn-delete"
-                            onClick={() => handleDeleteClick(expense)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                )))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 

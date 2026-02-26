@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { subscriptionsRouter } from "./modules/subscriptions/subscriptions.routes";
 import { expensesRouter } from "./modules/expenses/expenses.routes";
+import { aiRouter } from "./modules/ai/ai.routes";
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/expenses", expensesRouter);
+app.use("/api/ai", aiRouter);
+
 
 const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => console.log(`API http://localhost:${port}`));
